@@ -1,0 +1,57 @@
+version: '2.2'
+
+services:
+  es01:
+    container_name: es01
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
+    environment:
+      - node.name=es01
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=89787198 
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.license.self_generated.type=basic 
+      - xpack.security.enabled=true
+  
+    volumes: 
+      - 'data01:/usr/share/elasticsearch/data'
+    networks:
+      - net
+    ports:
+      - 9200:9200
+    healthcheck:
+      test: curl -s http://localhost:9200 >/dev/null; if [[ $$? == 52 ]]; then echo 0; else echo 1; fi
+      interval: 30s
+      timeout: 10s
+      retries: 6
+
+
+  wait_until_ready:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
+    command: /usr/bin/true
+    depends_on: {"kibana01": {"condition": "service_healthy"}}
+
+  kibana01:
+    container_name: kibana01
+    image: docker.elastic.co/kibana/kibana:8.17.3
+    environment:
+      - ELASTICSEARCH_HOSTS=["http://es01:9200"]
+      - XPACK_SECURITY_ENABLED=true
+      - ELASTICSEARCH_USERNAME=kibana
+      - ELASTICSEARCH_PASSWORD="89787198"
+    networks:
+      - net
+    ports:
+      - 5601:5601
+    healthcheck:
+      test: curl -s http://localhost:5601 >/dev/null; if [[ $$? == 52 ]]; then echo 0; else echo 1; fi
+      interval: 30s
+      timeout: 10s
+      retries: 6
+
+networks:
+  net:
+    name: llm-net
+    driver: bridge
+
+volumes: 
+  data01: {}

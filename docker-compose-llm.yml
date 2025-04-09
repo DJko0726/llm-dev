@@ -1,0 +1,17 @@
+services:
+  llm-rag:
+    restart: always
+    container_name: llm_python
+    user: '0:0'
+    build:
+      context: ./
+      dockerfile: Dockerfile_llm
+    ports:
+      - "8080:8080"
+    networks:
+      - net
+
+networks:
+  net:
+    name: llm-net
+    driver: bridge
